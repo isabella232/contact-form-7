@@ -2,12 +2,13 @@
 	"name": "firstandthird/contact-form-7",
 	"description": "Contact Form 7 - Modified for VIP",
 	"type": "wordpress-plugin",
-	"require-dev": {
-	  "dealerdirect/phpcodesniffer-composer-installer": "^0.7.0"
-	},
-	"require": {
-	  "automattic/vipwpcs": "^2.1.0",
-	  "wp-coding-standards/wpcs": "^2.3.0",
-	  "composer/installers": "1.*"
+	"package": {
+		"source": {
+			"url": "git@github.com:firstandthird/contact-form-7.git",
+			"type": "git"
+		},
+		"require": {
+			"composer/installers": "~1.0.6"
+		}
 	}
-  }
+}
