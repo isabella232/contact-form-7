@@ -1,5 +1,7 @@
 <?php
 
+require_once '../load.php';
+
 class WPCF7_ContactForm {
 
 	use WPCF7_SWV_SchemaHolder;
