@@ -3,9 +3,10 @@
 	"description": "Contact Form 7 - Modified for VIP",
 	"type": "wordpress-plugin",
 	"package": {
-		"source": {
-			"url": "git@github.com:firstandthird/contact-form-7.git",
-			"type": "git"
+		"version": "0.0.1",
+		"dist": {
+			"type": "zip",
+			"url": "https://github.com/firstandthird/contact-form-7/archive/refs/heads/master.zip"
 		},
 		"require": {
 			"composer/installers": "~1.0.6"
