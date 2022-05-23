@@ -21,23 +21,32 @@ function wpcf7_is_email( $email ) {
 }
 
 function wpcf7_is_url( $url ) {
-	$result = ( false !== filter_var( $url, FILTER_VALIDATE_URL ) );
+	$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+	$result = $scheme && in_array( $scheme, wp_allowed_protocols(), true );
 	return apply_filters( 'wpcf7_is_url', $result, $url );
 }
 
 function wpcf7_is_tel( $tel ) {
-	$pattern = '%^[+]?' // + sign
-		. '(?:\([0-9]+\)|[0-9]+)' // (1234) or 1234
-		. '(?:[/ -]*' // delimiter
-		. '(?:\([0-9]+\)|[0-9]+)' // (1234) or 1234
-		. ')*$%';
-
-	$result = preg_match( $pattern, trim( $tel ) );
+	$tel = preg_replace( '%[()/.*#\s-]+%', '', $tel );
+	$result = preg_match( '/^[+]?[0-9]+$/', $tel );
 	return apply_filters( 'wpcf7_is_tel', $result, $tel );
 }
 
 function wpcf7_is_number( $number ) {
-	$result = is_numeric( $number );
+	$result = false;
+
+	$patterns = array(
+		'/^[-]?[0-9]+(?:[eE][+-]?[0-9]+)?$/',
+		'/^[-]?(?:[0-9]+)?[.][0-9]+(?:[eE][+-]?[0-9]+)?$/',
+	);
+
+	foreach ( $patterns as $pattern ) {
+		if ( preg_match( $pattern, $number ) ) {
+			$result = true;
+			break;
+		}
+	}
+
 	return apply_filters( 'wpcf7_is_number', $result, $number );
 }
 
@@ -101,6 +110,11 @@ function wpcf7_is_mailbox_list( $mailbox_list ) {
 
 function wpcf7_is_email_in_domain( $email, $domain ) {
 	$email_list = wpcf7_is_mailbox_list( $email );
+
+	if ( false === $email_list ) {
+		return false;
+	}
+
 	$domain = strtolower( $domain );
 
 	foreach ( $email_list as $email ) {
@@ -129,38 +143,13 @@ function wpcf7_is_email_in_site_domain( $email ) {
 		return true;
 	}
 
-	$site_domain = strtolower( $_SERVER['SERVER_NAME'] );
+	$sitename = wp_parse_url( network_home_url(), PHP_URL_HOST );
 
-	if ( preg_match( '/^[0-9.]+$/', $site_domain ) ) { // 123.456.789.012
+	if ( preg_match( '/^[0-9.]+$/', $sitename ) ) { // 123.456.789.012
 		return true;
 	}
 
-	if ( wpcf7_is_email_in_domain( $email, $site_domain ) ) {
-		return true;
-	}
-
-	$home_url = home_url();
-
-	// for interoperability with WordPress MU Domain Mapping plugin
-	if ( is_multisite()
-	and function_exists( 'domain_mapping_siteurl' ) ) {
-		$domain_mapping_siteurl = domain_mapping_siteurl( false );
-
-		if ( $domain_mapping_siteurl ) {
-			$home_url = $domain_mapping_siteurl;
-		}
-	}
-
-	if ( preg_match( '%^https?://([^/]+)%', $home_url, $matches ) ) {
-		$site_domain = strtolower( $matches[1] );
-
-		if ( $site_domain != strtolower( $_SERVER['SERVER_NAME'] )
-		and wpcf7_is_email_in_domain( $email, $site_domain ) ) {
-			return true;
-		}
-	}
-
-	return false;
+	return wpcf7_is_email_in_domain( $email, $sitename );
 }
 
 
@@ -168,7 +157,7 @@ function wpcf7_is_email_in_site_domain( $email ) {
  * Verifies that a given file path is under the directories that WordPress
  * manages for user contents.
  *
- * Returns false if the file at the given path doesn't exist yet.
+ * Returns false if the file at the given path does not exist yet.
  *
  * @param string $path A file path.
  * @return bool True if the path is under the content directories,
@@ -189,11 +178,6 @@ function wpcf7_is_file_path_in_content_dir( $path ) {
 	and 0 === strpos( $path, realpath( ABSPATH . UPLOADS ) ) ) {
 		return true;
 	}
-
-  // VIP workaround to allow use of tmp folder
-  if ( '/tmp/cf7/' === substr( $path, 0, 9 ) ) {
-    return true;
-  }
 
 	return false;
 }
