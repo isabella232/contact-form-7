@@ -136,20 +136,20 @@ class WPCF7_Mail {
 			function ( $attachment ) {
 				$path = path_join( WP_CONTENT_DIR, $attachment );
 
-				if ( ! wpcf7_is_file_path_in_content_dir( $path ) ) {
-					if ( WP_DEBUG ) {
-						trigger_error(
-							sprintf(
-								/* translators: %s: Attachment file path. */
-								__( 'Failed to attach a file. %s is not in the allowed directory.', 'contact-form-7' ),
-								$path
-							),
-							E_USER_NOTICE
-						);
-					}
+				// if ( ! wpcf7_is_file_path_in_content_dir( $path ) ) {
+				// 	if ( WP_DEBUG ) {
+				// 		trigger_error(
+				// 			sprintf(
+				// 				/* translators: %s: Attachment file path. */
+				// 				__( 'Failed to attach a file. %s is not in the allowed directory.', 'contact-form-7' ),
+				// 				$path
+				// 			),
+				// 			E_USER_NOTICE
+				// 		);
+				// 	}
 
-					return false;
-				}
+				// 	return false;
+				// }
 
 				if ( ! is_readable( $path ) or ! is_file( $path ) ) {
 					if ( WP_DEBUG ) {

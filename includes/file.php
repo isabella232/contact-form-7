@@ -297,17 +297,10 @@ function wpcf7_maybe_add_random_dir( $dir ) {
  */
 function wpcf7_upload_tmp_dir() {
 	if ( defined( 'WPCF7_UPLOADS_TMP_DIR' ) ) {
-		$dir = path_join( WP_CONTENT_DIR, WPCF7_UPLOADS_TMP_DIR );
-		wp_mkdir_p( $dir );
-
-		if ( wpcf7_is_file_path_in_content_dir( $dir ) ) {
-			return $dir;
-		}
-	}
-
-	$dir = path_join( wpcf7_upload_dir( 'dir' ), 'wpcf7_uploads' );
-	wp_mkdir_p( $dir );
-	return $dir;
+        return WPCF7_UPLOADS_TMP_DIR;
+    } else {
+        return path_join( wpcf7_upload_dir( 'dir' ), 'wpcf7_uploads' );
+    }
 }
 
 

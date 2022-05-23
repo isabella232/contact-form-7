@@ -179,5 +179,10 @@ function wpcf7_is_file_path_in_content_dir( $path ) {
 		return true;
 	}
 
+	// VIP workaround to allow use of tmp folder
+	if ( '/tmp/cf7/' === substr( $path, 0, 9 ) ) {
+		return true;
+	}
+
 	return false;
 }
