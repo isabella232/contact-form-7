@@ -12,7 +12,7 @@ class WPCF7_Validation implements ArrayAccess {
 		);
 	}
 
-	public function invalidate( $context, $error ) {
+	public function invalidate( $context, $message ) {
 		if ( $context instanceof WPCF7_FormTag ) {
 			$tag = $context;
 		} elseif ( is_array( $context ) ) {
@@ -27,12 +27,6 @@ class WPCF7_Validation implements ArrayAccess {
 		if ( empty( $name )
 		or ! wpcf7_is_name( $name ) ) {
 			return;
-		}
-
-		if ( is_wp_error( $error ) ) {
-			$message = $error->get_error_message();
-		} else {
-			$message = $error;
 		}
 
 		if ( $this->is_valid( $name ) ) {
