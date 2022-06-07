@@ -6,6 +6,9 @@
 require_once WPCF7_PLUGIN_DIR . '/includes/swv/schema-holder.php';
 
 
+/**
+ * Returns an associative array of SWV rules.
+ */
 function wpcf7_swv_available_rules() {
 	$rules = array(
 		'required' => 'WPCF7_SWV_RequiredRule',
@@ -31,6 +34,9 @@ function wpcf7_swv_available_rules() {
 
 add_action( 'wpcf7_init', 'wpcf7_swv_load_rules', 10, 0 );
 
+/**
+ * Loads SWV fules.
+ */
 function wpcf7_swv_load_rules() {
 	$rules = wpcf7_swv_available_rules();
 
@@ -45,6 +51,13 @@ function wpcf7_swv_load_rules() {
 }
 
 
+/**
+ * Creates an SWV rule object.
+ *
+ * @param string $rule_name Rule name.
+ * @param string|array $properties Optional. Rule properties.
+ * @return WPCF7_SWV_Rule|null The rule object, or null if it failed.
+ */
 function wpcf7_swv_create_rule( $rule_name, $properties = '' ) {
 	$rules = wpcf7_swv_available_rules();
 
@@ -54,6 +67,9 @@ function wpcf7_swv_create_rule( $rule_name, $properties = '' ) {
 }
 
 
+/**
+ * Returns an associative array of JSON Schema for Contact Form 7 SWV.
+ */
 function wpcf7_swv_get_meta_schema() {
 	return array(
 		'$schema' => 'https://json-schema.org/draft/2020-12/schema',
@@ -101,6 +117,9 @@ function wpcf7_swv_get_meta_schema() {
 }
 
 
+/**
+ * The base class of SWV rules.
+ */
 abstract class WPCF7_SWV_Rule {
 
 	protected $properties = array();
@@ -109,6 +128,12 @@ abstract class WPCF7_SWV_Rule {
 		$this->properties = wp_parse_args( $properties, array() );
 	}
 
+
+	/**
+	 * Returns true if this rule matches the given context.
+	 *
+	 * @param array $context Context.
+	 */
 	public function matches( $context ) {
 		$field = $this->get_property( 'field' );
 
@@ -121,14 +146,33 @@ abstract class WPCF7_SWV_Rule {
 		return true;
 	}
 
+
+	/**
+	 * Validates with this rule's logic.
+	 *
+	 * @param array $context Context.
+	 */
 	public function validate( $context ) {
 		return true;
 	}
 
+
+	/**
+	 * Converts the properties to an array.
+	 *
+	 * @return array Array of properties.
+	 */
 	public function to_array() {
 		return (array) $this->properties;
 	}
 
+
+	/**
+	 * Returns the property value specified by the given property name.
+	 *
+	 * @param string $name Property name.
+	 * @return mixed Property value.
+	 */
 	public function get_property( $name ) {
 		if ( isset( $this->properties[$name] ) ) {
 			return $this->properties[$name];
@@ -138,26 +182,51 @@ abstract class WPCF7_SWV_Rule {
 }
 
 
+/**
+ * The base class of SWV composite rules.
+ */
 abstract class WPCF7_SWV_CompositeRule extends WPCF7_SWV_Rule {
 
 	protected $rules = array();
 
+
+	/**
+	 * Adds a sub-rule to this composite rule.
+	 *
+	 * @param WPCF7_SWV_Rule $rule Sub-rule to be added.
+	 */
 	public function add_rule( $rule ) {
 		if ( $rule instanceof WPCF7_SWV_Rule ) {
 			$this->rules[] = $rule;
 		}
 	}
 
+
+	/**
+	 * Returns an iterator of sub-rules.
+	 */
 	public function rules() {
 		foreach ( $this->rules as $rule ) {
 			yield $rule;
 		}
 	}
 
+
+	/**
+	 * Returns true if this rule matches the given context.
+	 *
+	 * @param array $context Context.
+	 */
 	public function matches( $context ) {
 		return true;
 	}
 
+
+	/**
+	 * Validates with this rule's logic.
+	 *
+	 * @param array $context Context.
+	 */
 	public function validate( $context ) {
 		foreach ( $this->rules() as $rule ) {
 			if ( $rule->matches( $context ) ) {
@@ -172,6 +241,12 @@ abstract class WPCF7_SWV_CompositeRule extends WPCF7_SWV_Rule {
 		return true;
 	}
 
+
+	/**
+	 * Converts the properties to an array.
+	 *
+	 * @return array Array of properties.
+	 */
 	public function to_array() {
 		$rules_arrays = array_map(
 			function ( $rule ) {
@@ -191,6 +266,9 @@ abstract class WPCF7_SWV_CompositeRule extends WPCF7_SWV_Rule {
 }
 
 
+/**
+ * The schema class as a composite rule.
+ */
 class WPCF7_SWV_Schema extends WPCF7_SWV_CompositeRule {
 
 	const version = 'Contact Form 7 SWV Schema 2022-03';

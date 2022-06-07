@@ -12,6 +12,12 @@ export default function validate( form, options = {} ) {
 		return;
 	}
 
+	if ( options.target?.closest( '.novalidate' ) ) {
+		return;
+	}
+
+	const formData = new FormData();
+
 	const targetFields = [];
 
 	for ( const wrap of scope.querySelectorAll( '.wpcf7-form-control-wrap' ) ) {
@@ -19,8 +25,44 @@ export default function validate( form, options = {} ) {
 			continue;
 		}
 
+		wrap.querySelectorAll(
+			':where( input, textarea, select ):enabled'
+		).forEach( control => {
+			if ( ! control.name ) {
+				return;
+			}
+
+			switch ( control.type ) {
+				case 'button':
+				case 'image':
+				case 'reset':
+				case 'submit':
+					break;
+				case 'checkbox':
+				case 'radio':
+					if ( control.checked ) {
+						formData.append( control.name, control.value );
+					}
+					break;
+				case 'select-multiple':
+					for ( const option of control.selectedOptions ) {
+						formData.append( control.name, option.value );
+					}
+					break;
+				case 'file':
+					for ( const file of control.files ) {
+						formData.append( control.name, file );
+					}
+					break;
+				default:
+					formData.append( control.name, control.value );
+			}
+		} );
+
 		if ( wrap.dataset.name ) {
 			targetFields.push( wrap.dataset.name );
+
+			wrap.setAttribute( 'data-under-validation', '1' );
 
 			if (
 				wrap.dataset.name === options.target.name.replace( /\[.*\]$/, '' )
@@ -57,7 +99,7 @@ export default function validate( form, options = {} ) {
 	Promise.resolve( setStatus( form, 'validating' ) )
 		.then( status => {
 			const invalidFields = [];
-			const formDataTree = new FormDataTree( new FormData( form ) );
+			const formDataTree = new FormDataTree( formData );
 
 			for ( const { rule, ...properties } of rules ) {
 				if ( invalidFields.includes( properties.field ) ) {
@@ -77,6 +119,12 @@ export default function validate( form, options = {} ) {
 		} )
 		.finally( () => {
 			setStatus( form, prevStatus );
+
+			form.querySelectorAll(
+				'.wpcf7-form-control-wrap[data-under-validation]'
+			).forEach( wrap => {
+				wrap.removeAttribute( 'data-under-validation' );
+			} );
 		} );
 }
 
@@ -116,6 +164,13 @@ export const setValidationError = ( form, fieldName, message ) => {
 		form.querySelectorAll(
 			`.wpcf7-form-control-wrap[data-name="${ fieldName }"]`
 		).forEach( wrap => {
+			if (
+				'validating' === form.getAttribute( 'data-status' ) &&
+				! wrap.dataset.underValidation
+			) {
+				return;
+			}
+
 			const tip = document.createElement( 'span' );
 			tip.classList.add( 'wpcf7-not-valid-tip' );
 			tip.setAttribute( 'aria-hidden', 'true' );

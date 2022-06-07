@@ -11,28 +11,46 @@
  *
  * @return bool True if it is a valid name, false if not.
  */
-function wpcf7_is_name( $string ) {
-	return preg_match( '/^[A-Za-z][-A-Za-z0-9_:.]*$/', $string );
+function wpcf7_is_name( $text ) {
+	return preg_match( '/^[A-Za-z][-A-Za-z0-9_:.]*$/', $text );
 }
 
-function wpcf7_is_email( $email ) {
-	$result = is_email( $email );
-	return apply_filters( 'wpcf7_is_email', $result, $email );
+
+/**
+ * Checks whether the given text is a well-formed email address.
+ */
+function wpcf7_is_email( $text ) {
+	$result = is_email( $text );
+	return apply_filters( 'wpcf7_is_email', $result, $text );
 }
 
-function wpcf7_is_url( $url ) {
-	$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+
+/**
+ * Checks whether the given text is a well-formed URL.
+ */
+function wpcf7_is_url( $text ) {
+	$scheme = wp_parse_url( $text, PHP_URL_SCHEME );
 	$result = $scheme && in_array( $scheme, wp_allowed_protocols(), true );
-	return apply_filters( 'wpcf7_is_url', $result, $url );
+	return apply_filters( 'wpcf7_is_url', $result, $text );
 }
 
-function wpcf7_is_tel( $tel ) {
-	$tel = preg_replace( '%[()/.*#\s-]+%', '', $tel );
-	$result = preg_match( '/^[+]?[0-9]+$/', $tel );
-	return apply_filters( 'wpcf7_is_tel', $result, $tel );
+
+/**
+ * Checks whether the given text is a well-formed telephone number.
+ */
+function wpcf7_is_tel( $text ) {
+	$text = preg_replace( '%[()/.*#\s-]+%', '', $text );
+	$result = preg_match( '/^[+]?[0-9]+$/', $text );
+	return apply_filters( 'wpcf7_is_tel', $result, $text );
 }
 
-function wpcf7_is_number( $number ) {
+
+/**
+ * Checks whether the given text is a well-formed number.
+ *
+ * @see https://html.spec.whatwg.org/multipage/input.html#number-state-(type=number)
+ */
+function wpcf7_is_number( $text ) {
 	$result = false;
 
 	$patterns = array(
@@ -41,25 +59,40 @@ function wpcf7_is_number( $number ) {
 	);
 
 	foreach ( $patterns as $pattern ) {
-		if ( preg_match( $pattern, $number ) ) {
+		if ( preg_match( $pattern, $text ) ) {
 			$result = true;
 			break;
 		}
 	}
 
-	return apply_filters( 'wpcf7_is_number', $result, $number );
+	return apply_filters( 'wpcf7_is_number', $result, $text );
 }
 
-function wpcf7_is_date( $date ) {
-	$result = preg_match( '/^([0-9]{4,})-([0-9]{2})-([0-9]{2})$/', $date, $matches );
+
+/**
+ * Checks whether the given text is a valid date.
+ *
+ * @see https://html.spec.whatwg.org/multipage/input.html#date-state-(type=date)
+ */
+function wpcf7_is_date( $text ) {
+	$result = preg_match( '/^([0-9]{4,})-([0-9]{2})-([0-9]{2})$/', $text, $matches );
 
 	if ( $result ) {
 		$result = checkdate( $matches[2], $matches[3], $matches[1] );
 	}
 
-	return apply_filters( 'wpcf7_is_date', $result, $date );
+	return apply_filters( 'wpcf7_is_date', $result, $text );
 }
 
+
+/**
+ * Checks whether the given text is a well-formed mailbox list.
+ *
+ * @param string|array $mailbox_list The subject to be checked.
+ *                     Comma-separated string or an array of mailboxes.
+ * @return array|bool Array of email addresses if all items are well-formed
+ *                    mailbox, false if not.
+ */
 function wpcf7_is_mailbox_list( $mailbox_list ) {
 	if ( ! is_array( $mailbox_list ) ) {
 		$mailbox_text = (string) $mailbox_list;
@@ -108,6 +141,15 @@ function wpcf7_is_mailbox_list( $mailbox_list ) {
 	return $addresses;
 }
 
+
+/**
+ * Checks whether an email address belongs to a domain.
+ *
+ * @param string $email A mailbox or a comma-separated list of mailboxes.
+ * @param string $domain Internet domain name.
+ * @return bool True if all of the email addresses belong to the domain,
+ *              false if not.
+ */
 function wpcf7_is_email_in_domain( $email, $domain ) {
 	$email_list = wpcf7_is_mailbox_list( $email );
 
@@ -138,6 +180,10 @@ function wpcf7_is_email_in_domain( $email, $domain ) {
 	return true;
 }
 
+
+/**
+ * Checks whether an email address belongs to the site domain.
+ */
 function wpcf7_is_email_in_site_domain( $email ) {
 	if ( wpcf7_is_localhost() ) {
 		return true;
